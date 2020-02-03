@@ -1,8 +1,7 @@
 var con = require('../config/db');
 var validate = require('../service/validate.service');
-var auth = require('../domain/AuthClass');
 
-exports.getPhoneNumber =function (req, res, next) {
+exports.getPhoneNumber = function (req, res, next) {
     let SELECT = 'SELECT PHONE TYPE_SMS FROM MSG_TABLE';
     let WHERE = ' WHERE STATUS_SMS = 0';
     let sql = SELECT + WHERE;
@@ -11,4 +10,8 @@ exports.getPhoneNumber =function (req, res, next) {
         console.log("Success get table");
         return res.status(200).send(validate.isPhoneNumber(result));
     });
+}
+
+exports.updateAfterSent = function (reslt) {
+    let INSERT = 'INSERT INTO MSG_TABLE (`MSGKEY`, `STATUS_SMS`, `INPUT_DATE`, `RSLT`, `TYPE_SMS`)'
 }

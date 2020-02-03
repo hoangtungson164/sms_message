@@ -1,5 +1,6 @@
 var request = require('request');
-var campaign = require('../domain/CampaignClass');
+var campaign = require('../domain/Campaign.class');
+var brandName_ads = require('../domain/BrandNameAds.class');
 
 exports.getAuth = request.post(
     'http://sandbox.sms.fpt.net/oauth2/token',
@@ -42,7 +43,23 @@ exports.createCampaign = function (campaign_input) {
     )
 }
 
-exports.sendSMS = function(){
-    
+exports.sendSMS = function(ads_input){
+    ads_input = brandName_ads;
+    request.post(
+        'http://sandbox.sms.fpt.net/api/create-campaign',
+        {
+            json: {
+                access_token: ads_input.access_token,
+                session_id: ads_input.session_id,
+                CampaignCode: ads_input.CampaignCode,
+                PhoneList: ads_input.PhoneList,
+            }
+        },
+        function (error, response, body) {
+            if (!error && response.statusCode == 200) {
+                console.log(body);
+            }
+        }
+    )
 }
 
