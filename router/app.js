@@ -16,7 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', router);
-// app.use(MesController.getAuth)
+
 
 app.use(function (req, res, next) {
     next(createError(404));

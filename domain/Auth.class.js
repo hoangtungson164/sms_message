@@ -1,15 +1,11 @@
-module.exports = function auth(auth_user) {
-    const {
-        GRANT_TYPE,
-        CLIENT_ID,
-        CLIENT_SECRET,
-        SCOPE,
-        SESSION_ID
-    } = auth_user;
-
-    this.grant_type = GRANT_TYPE;
-    this.client_id = CLIENT_ID;
-    this.client_scecret = CLIENT_SECRET;
-    this.scope = SCOPE;
-    this.session_id = SESSION_ID; 
+class Auth {
+    constructor (GRANT_TYPE, CLIENT_ID, CLIENT_SECRET, SCOPE, SESSION_ID) {
+        this.GRANT_TYPE = GRANT_TYPE;
+        this.CLIENT_ID = CLIENT_ID;
+        this.CLIENT_SECRET = CLIENT_SECRET;
+        this.SCOPE = SCOPE;
+        this.SESSION_ID = SESSION_ID;
+    }
 }
+
+module.exports = Auth;
