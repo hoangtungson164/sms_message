@@ -7,6 +7,7 @@ var morgan = require('morgan');
 var app = express();
 var cors = require('cors')
 var router = require('../router/router.js')
+var MesController = require('../controller/MesController')
 
 app.use(cors());
 app.use(morgan('combined', { stream: winston.stream }));
@@ -15,6 +16,7 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
 app.use('/', router);
+// app.use(MesController.getAuth)
 
 app.use(function (req, res, next) {
     next(createError(404));
