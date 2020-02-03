@@ -3,7 +3,6 @@ var Campaign = require('../domain/Campaign.class');
 var BrandNameAds = require('../domain/BrandNameAds.class');
 
 exports.getAuth = function (reslt) {
-    console.log('get auth');
     request.post(
         'http://sandbox.sms.fpt.net/oauth2/token',
         {
@@ -29,7 +28,6 @@ exports.getAuth = function (reslt) {
     );
 }
 var createCampaign = function (campaign_input, reslt) {
-    console.log('create campaign')
     request.post(
         'http://sandbox.sms.fpt.net/api/create-campaign',
         {

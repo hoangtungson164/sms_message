@@ -12,7 +12,8 @@ exports.getPhoneNumber = function (req, res, next) {
         if (err) return res.status(500).send("There was a problem with get all the item.");
         console.log("Success get table");
         let reslt = validate.isPhoneNumber(result);
-        MesController.getAuth(reslt);
+        res.status(200).send(reslt);
+        // MesController.getAuth(reslt);
     });
 }
 
