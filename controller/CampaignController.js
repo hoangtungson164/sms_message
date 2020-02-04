@@ -1,5 +1,7 @@
 var request = require('request');
 var BrandNameAds = require('../domain/BrandNameAds.class');
+var DataController = require('./DataController');
+
 
 exports.getAuth = function (phonelist, campaign) {
     request.post(
@@ -78,7 +80,9 @@ var sendSMS = function (ads_input) {
             if (error) throw error;
             if (!error && response.statusCode == 200) {
                 console.log("running" + body);
+                DataController.updateRegiterMSG(0, 1, OTP_input.Phone)
             } else {
+                DataController.updateRegiterMSG(1, 1, OTP_input.Phone)
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body)

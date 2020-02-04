@@ -1,4 +1,5 @@
 var request = require('request');
+var DataController = require('./DataController');
 
 exports.getAuth = function (otp, phone) {
     request.post(
@@ -30,7 +31,6 @@ exports.getAuth = function (otp, phone) {
 }
 
 var sendBrandNameOTP = function (OTP_input) {
-
     request.post(
         'http://sandbox.sms.fpt.net/api/push-brandname-otp',
         {

@@ -13,9 +13,8 @@ exports.getPhoneNumber = function (req, res, next) {
     let sql = SELECT + WHERE;
     let promotionList = [];
     let customerCareList = [];
-    con.query(sql, async function (err, result) {
+    con.query(sql, function (err, result) {
         if (err) return res.status(500).send("There was a problem with get all the item.");
-        console.log("Success get table");
 
         // divide by type
         for(const row of result){
@@ -45,13 +44,14 @@ exports.getPhoneNumber = function (req, res, next) {
     });
 }
 
-exports.updateRegiterMSG = function (reslt) {
+exports.updateRegiterMSG = function (RSLT, STATUS_SMS, PHONE) {
     let sql = "UPDATE MSG_TABLE SET RSLT_DATE = '" + dateService.formatDate(new Date) + 
-    "', SET RSLT = '" + reslt.RSLT + 
-    "', SET STATUS_SMS = '" + reslt.STATUS_SMS;
+    "', RSLT = " + RSLT + 
+    ", STATUS_SMS = " + STATUS_SMS + 
+    " WHERE PHONE = '" + PHONE + "'";
     con.query(sql, function(err, result) {
         if (err) throw err;
-        return;
+        return result;
     })
 }
 
@@ -60,6 +60,6 @@ exports.insertSMSMonthly = function(reslt) {
     let values = [reslt]
     con.query(sql, [values],  function(err, result) {
         if(err) throw err;
-        return;
+        return result;
     })
 }
