@@ -28,7 +28,7 @@ var job = new CronJob('* * * * * *', function(){
     );
 }, function(){ console.log('end of the cron') }, false, 'America/New_York');
 
-job.start();
+// job.start();
 
 app.use(cors());
 app.use(morgan('combined', { stream: winston.stream }));
