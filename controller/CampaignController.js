@@ -1,9 +1,10 @@
 var request = require('request');
 var BrandNameAds = require('../domain/BrandNameAds.class');
 var DataController = require('./DataController');
+var changeToArray = require('../service/changeToArray.service');
 
 
-exports.getAuth = function (phonelist, campaign) {
+exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
     request.post(
         'http://sandbox.sms.fpt.net/oauth2/token',
         {
@@ -15,13 +16,12 @@ exports.getAuth = function (phonelist, campaign) {
                 session_id: '789dC48b88e54f58ece5939f14a'
             }
         },
-        async function (error, response, body) {
+        function (error, response, body) {
             if (error) throw error;
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode === 200) {
                 console.log(body);
                 campaign.access_token = body.access_token;
-                createCampaign(campaign, phonelist);
-                
+                createCampaign(campaign, phonelist, campaignPhoneList);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -29,9 +29,9 @@ exports.getAuth = function (phonelist, campaign) {
             }
         }
     );
-}
+};
 
-var createCampaign = function (campaign_input, phonelist) {
+var createCampaign = function (campaign_input, phonelist, campaignPhoneList) {
     request.post(
         'http://sandbox.sms.fpt.net/api/create-campaign',
         {
@@ -47,10 +47,11 @@ var createCampaign = function (campaign_input, phonelist) {
         },
         function (error, response, body) {
             if (error) throw error;
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode === 200) {
                 console.log(body);
                 console.log(body.CampaignCode);
-                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id, body.CampaignCode, phonelist));
+                
+                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id, body.CampaignCode, phonelist), campaignPhoneList);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -58,9 +59,9 @@ var createCampaign = function (campaign_input, phonelist) {
             }
         }
     )
-}
+};
 
-var sendSMS = function (ads_input) {
+var sendSMS = function (ads_input, campaignPhoneList) {
     console.log(ads_input);
     let phonelist = '';
     for (const ads of ads_input.PhoneList) {
@@ -78,18 +79,23 @@ var sendSMS = function (ads_input) {
         },
         function (error, response, body) {
             if (error) throw error;
-            if (!error && response.statusCode == 200) {
-                console.log("running" + body);
-                DataController.updateRegiterMSG(0, 1, OTP_input.Phone)
+            if (!error && response.statusCode === 200) {
+                console.log(body);
+                for(const phone of ads_input.PhoneList){
+                    DataController.updateRegiterMSG(0,1,phone);
+                }
             } else {
-                DataController.updateRegiterMSG(1, 1, OTP_input.Phone)
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body)
+                for(const phone of ads_input.PhoneList){
+                    DataController.updateRegiterMSG(1,1,phone);
+                }
             }
+            DataController.insertSMSMonthly(changeToArray(campaignPhoneList))
         }
     )
-}
+};
 
 
 

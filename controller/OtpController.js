@@ -13,14 +13,12 @@ exports.getAuth = function (otp, phone) {
                 session_id: '789dC48b88e54f58ece5939f14a'
             }
         },
-        async function (error, response, body) {
+        function (error, response, body) {
             if (error) throw error;
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode === 200) {
                 console.log(body);
-                console.log(otp);
                 otp.access_token = body.access_token;
-                otp.Phone = phone;
-                sendBrandNameOTP(otp);
+                sendBrandNameOTP(otp, phone);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -28,9 +26,9 @@ exports.getAuth = function (otp, phone) {
             }
         }
     );
-}
+};
 
-var sendBrandNameOTP = function (OTP_input) {
+var sendBrandNameOTP = function (OTP_input, phone) {
     request.post(
         'http://sandbox.sms.fpt.net/api/push-brandname-otp',
         {
@@ -38,19 +36,23 @@ var sendBrandNameOTP = function (OTP_input) {
                 access_token: OTP_input.access_token,
                 session_id: OTP_input.session_id,
                 BrandName: OTP_input.BrandName,
-                Phone: OTP_input.Phone,
+                Phone: phone,
                 Message: OTP_input.Message,
             }
         },
         function (error, response, body) {
             if (error) throw error;
-            if (!error && response.statusCode == 200) {
+            if (!error && response.statusCode === 200) {
                 console.log(body);
+                console.log('success to send otp');
+                DataController.updateRegiterMSG(0,1,phone);
             } else {
+                console.log('fail to send otp');
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
-                console.log(body)
+                console.log(body);
+                DataController.updateRegiterMSG(0,1,phone);
             }
         }
     )
-}
+};
