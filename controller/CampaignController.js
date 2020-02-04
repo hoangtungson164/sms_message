@@ -1,8 +1,7 @@
 var request = require('request');
-var Campaign = require('../domain/Campaign.class');
 var BrandNameAds = require('../domain/BrandNameAds.class');
 
-exports.getAuth = function (reslt) {
+exports.getAuth = function (phonelist, campaign) {
     request.post(
         'http://sandbox.sms.fpt.net/oauth2/token',
         {
@@ -14,11 +13,13 @@ exports.getAuth = function (reslt) {
                 session_id: '789dC48b88e54f58ece5939f14a'
             }
         },
-        function (error, response, body) {
-            if(error) throw error;
+        async function (error, response, body) {
+            if (error) throw error;
             if (!error && response.statusCode == 200) {
                 console.log(body);
-                createCampaign(new Campaign(body.access_token, 'abcde', "Khuyến 5", "FTI", "Dicount to 10% for the 100 customer apply", "2021-03-03 10:30", "150"), reslt)
+                campaign.access_token = body.access_token;
+                createCampaign(campaign, phonelist);
+                
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -27,7 +28,8 @@ exports.getAuth = function (reslt) {
         }
     );
 }
-var createCampaign = function (campaign_input, reslt) {
+
+var createCampaign = function (campaign_input, phonelist) {
     request.post(
         'http://sandbox.sms.fpt.net/api/create-campaign',
         {
@@ -42,11 +44,11 @@ var createCampaign = function (campaign_input, reslt) {
             }
         },
         function (error, response, body) {
-            if(error) throw error;
+            if (error) throw error;
             if (!error && response.statusCode == 200) {
                 console.log(body);
                 console.log(body.CampaignCode);
-            sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id, body.CampaignCode, reslt));
+                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id, body.CampaignCode, phonelist));
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -59,7 +61,7 @@ var createCampaign = function (campaign_input, reslt) {
 var sendSMS = function (ads_input) {
     console.log(ads_input);
     let phonelist = '';
-    for (const ads of ads_input.PhoneList){
+    for (const ads of ads_input.PhoneList) {
         phonelist += ads + ','
     }
     request.post(
@@ -73,8 +75,7 @@ var sendSMS = function (ads_input) {
             }
         },
         function (error, response, body) {
-            console.log(request.json);
-            if(error) throw error;
+            if (error) throw error;
             if (!error && response.statusCode == 200) {
                 console.log("running" + body);
             } else {
@@ -85,4 +86,6 @@ var sendSMS = function (ads_input) {
         }
     )
 }
+
+
 

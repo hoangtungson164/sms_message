@@ -7,7 +7,6 @@ var morgan = require('morgan');
 var app = express();
 var cors = require('cors')
 var router = require('../router/router.js')
-var MesController = require('../controller/MesController')
 
 app.use(cors());
 app.use(morgan('combined', { stream: winston.stream }));
