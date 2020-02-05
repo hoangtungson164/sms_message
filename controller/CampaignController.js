@@ -1,11 +1,14 @@
 let request = require('request');
 let BrandNameAds = require('../domain/BrandNameAds.class');
 let DataController = require('./DataController');
-
+require('dotenv').config();
+const urlGetAuth = process.env.URL_REQUEST + '/oauth2/token';
+const urlCreateCampaign = process.env.URL_REQUEST + '/api/create-campaign';
+const urlSendCampaign = process.env.URL_REQUEST + '/api/push-brandname-ads';
 
 exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
     request.post(
-        'http://sandbox.sms.fpt.net/oauth2/token',
+        urlGetAuth,
         {
             json: {
                 grant_type: 'client_credentials',
@@ -32,7 +35,7 @@ exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
 
 var createCampaign = function (campaign_input, phonelist, campaignPhoneList) {
     request.post(
-        'http://sandbox.sms.fpt.net/api/create-campaign',
+        urlCreateCampaign,
         {
             json: {
                 access_token: campaign_input.access_token,
@@ -68,7 +71,7 @@ var sendSMS = function (ads_input, campaignPhoneList) {
         phonelist += ads + ','
     }
     request.post(
-        'http://sandbox.sms.fpt.net/api/push-brandname-ads',
+        urlSendCampaign,
         {
             json: {
                 access_token: ads_input.access_token,

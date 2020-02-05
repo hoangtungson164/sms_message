@@ -56,6 +56,7 @@ exports.updateRegiterMSG = function (RSLT, STATUS_SMS, phone) {
         if (err) throw err;
         console.log('update success');
 
+        // get the updated row
         let SELECT = 'SELECT*FROM MSG_TABLE';
         let WHERE = ' WHERE MSGKEY = ' + phone.MSGKEY;
         let sql = SELECT + WHERE;
@@ -63,12 +64,14 @@ exports.updateRegiterMSG = function (RSLT, STATUS_SMS, phone) {
             console.log('get again success');
             console.log(result[0]);
 
+            // insert the updated row to new table
             let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES ?';
             let values = [changeToArray.valueChange(result[0])];
             con.query(sql, [values], function (err, result) {
                 if (err) throw err;
                 console.log('insert success');
 
+                // delete it in the MSG_TABLE
                 let DELETE = "DELETE FROM MSG_TABLE";
                 let WHERE = " WHERE MSGKEY = '" + phone.MSGKEY + "'";
                 let sql = DELETE + WHERE;
