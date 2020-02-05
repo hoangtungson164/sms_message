@@ -44,3 +44,8 @@ var OtpController = require('./controller/OtpController');
 //   console.log('You will see this message every second');
 // }, function(){ console.log('end of the cron') }, false, 'America/New_York');
 // job.start();
+
+let campaignName = 'campaign_name ' + new Date;
+
+console.log(campaignName);
+

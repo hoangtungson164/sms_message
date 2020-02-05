@@ -5,30 +5,21 @@ var path = require('path');
 var cookieParser = require('cookie-parser');
 var morgan = require('morgan');
 var app = express();
-var cors = require('cors')
-var router = require('../router/router.js')
-var CronJob = require('cron').CronJob;
-var request = require('request');
+var cors = require('cors');
+var router = require('../router/router.js');
+var DataController = require('../controller/DataController');
+let CronJob = require('cron').CronJob;
 
-var job = new CronJob('* * * * * *', function(){
-    request.get(
-        'http://localhost:3000/data',
-        function (error, response, body) {
-            console.log('running')
-            if (error) throw error;
-            if (!error && response.statusCode === 200) {
-                console.log(body);
-
-            } else {
-                console.log(response.statusCode);
-                console.log(response.statusMessage);
-                console.log(body)
-            }
+let job = new CronJob('* * * * * *', function(){
+    console.log('success');
+    DataController.getPhoneNumber(function (r) {
+        if(r.length === 0) {
+            job.stop();
         }
-    );
+    });
 }, function(){ console.log('end of the cron') }, false, 'America/New_York');
 
-// job.start();
+job.start();
 
 app.use(cors());
 app.use(morgan('combined', { stream: winston.stream }));

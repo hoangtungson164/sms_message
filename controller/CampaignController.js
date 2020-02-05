@@ -1,7 +1,6 @@
-var request = require('request');
-var BrandNameAds = require('../domain/BrandNameAds.class');
-var DataController = require('./DataController');
-var changeToArray = require('../service/changeToArray.service');
+let request = require('request');
+let BrandNameAds = require('../domain/BrandNameAds.class');
+let DataController = require('./DataController');
 
 
 exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
@@ -50,8 +49,9 @@ var createCampaign = function (campaign_input, phonelist, campaignPhoneList) {
             if (!error && response.statusCode === 200) {
                 console.log(body);
                 console.log(body.CampaignCode);
-                
-                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id, body.CampaignCode, phonelist), campaignPhoneList);
+
+                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id,
+                    body.CampaignCode, phonelist), campaignPhoneList);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
@@ -87,12 +87,11 @@ var sendSMS = function (ads_input, campaignPhoneList) {
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
-                console.log(body)
+                console.log(body);
                 for(const phone of ads_input.PhoneList){
                     DataController.updateRegiterMSG(1,1,phone);
                 }
             }
-            DataController.insertSMSMonthly(changeToArray(campaignPhoneList))
         }
     )
 };

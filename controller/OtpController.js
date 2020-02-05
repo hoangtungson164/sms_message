@@ -36,7 +36,7 @@ var sendBrandNameOTP = function (OTP_input, phone) {
                 access_token: OTP_input.access_token,
                 session_id: OTP_input.session_id,
                 BrandName: OTP_input.BrandName,
-                Phone: phone,
+                Phone: phone.PHONE,
                 Message: OTP_input.Message,
             }
         },
@@ -51,7 +51,7 @@ var sendBrandNameOTP = function (OTP_input, phone) {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body);
-                DataController.updateRegiterMSG(0,1,phone);
+                DataController.updateRegiterMSG(1,1,phone);
             }
         }
     )

@@ -1,27 +1,30 @@
-var con = require('../config/db');
-var validate = require('../service/validate.service');
-var dateService = require('../service/date.service');
-var CampaignController = require('./CampaignController');
-var campaignService = require('../service/campaign.service');
-var changeToArray = require('../service/changeToArray.service');
+let con = require('../config/db');
+let validate = require('../service/validate.service');
+let dateService = require('../service/date.service');
+let CampaignController = require('./CampaignController');
+let campaignService = require('../service/campaign.service');
+let changeToArray = require('../service/changeToArray.service');
+let OtpController = require('./OtpController');
+let otpService = require('../service/otp.service');
 
-
-var OtpController = require('./OtpController');
-var otpService = require('../service/otp.service');
-
-exports.getPhoneNumber = function (req, res, next) {
+exports.getPhoneNumber =  function (fn) {
+    campaignService.CampaignName += 1;
     let SELECT = 'SELECT*FROM MSG_TABLE';
     let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
     let sql = SELECT + WHERE;
     let promotionList = [];
     let customerCareList = [];
-    console.log('data controller');
+    checkTableExist();
     con.query(sql, function (err, result) {
-        if (err) return res.status(500).send("There was a problem with get all the item.");
+        if (err) throw err;
+        if (result.length === 0){
+            fn(result);
+            return;
+        }
 
         // divide by type
-        for(const row of result){
-            if(row.TYPE_SMS == 1){
+        for (const row of result) {
+            if (row.TYPE_SMS === 1) {
                 promotionList.push(row)
             } else {
                 customerCareList.push(row)
@@ -31,51 +34,64 @@ exports.getPhoneNumber = function (req, res, next) {
         // validate and get phone number
         let promotionPhone = validate.isPhoneNumber(promotionList);
         let customerCarePhone = validate.isPhoneNumber(customerCareList);
-        let totalPhone = validate.isPhoneNumber(result);
-     
+
         // send sms campaign
-        CampaignController.getAuth(promotionPhone, campaignService.campaignPromtion, promotionList);
-        CampaignController.getAuth(customerCarePhone, campaignService.campaignCustomerCare, customerCareList);
+        CampaignController.getAuth(promotionPhone, campaignService, promotionList);
 
         // // send sms otp
-        // for (const phone of totalPhone){
-        //     OtpController.getAuth(otpService.otpMes, phone, result);
-        // }
+        for (const phone of customerCarePhone) {
+            OtpController.getAuth(otpService.otpMes, phone);
+        }
 
-        return res.status(200).send(result);
+        console.log(result);
     });
-}
+};
 
-exports.updateRegiterMSG = function (RSLT, STATUS_SMS, PHONE) {
-    let sql = "UPDATE MSG_TABLE SET RSLT_DATE = '" + dateService.formatDate(new Date) + 
-    "', RSLT = " + RSLT + 
-    ", STATUS_SMS = " + STATUS_SMS + 
-    " WHERE PHONE = '" + PHONE + "'";
-    con.query(sql, function(err, result) {
+exports.updateRegiterMSG = function (RSLT, STATUS_SMS, phone) {
+    let sql = "UPDATE MSG_TABLE SET RSLT_DATE = '" + dateService.formatDate(new Date) +
+        "', RSLT = " + RSLT +
+        ", STATUS_SMS = " + STATUS_SMS +
+        " WHERE MSGKEY = '" + phone.MSGKEY + "'";
+    con.query(sql, function (err, result) {
         if (err) throw err;
         console.log('update success');
-        return result;
-    })
-}
 
-exports.insertSMSMonthly = function(reslt) {
-    let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) +  ' VALUES ?'
-    let values = reslt
-    con.query(sql, [values],  function(err, result) {
-        if(err) throw err;
-        for(const row of reslt){
-            deleteMSGRow(row[0]);
+        let SELECT = 'SELECT*FROM MSG_TABLE';
+        let WHERE = ' WHERE MSGKEY = ' + phone.MSGKEY;
+        let sql = SELECT + WHERE;
+        con.query(sql, function (err, result) {
+            console.log('get again success');
+            console.log(result[0]);
+
+            let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES ?';
+            let values = [changeToArray.valueChange(result[0])];
+            con.query(sql, [values], function (err, result) {
+                if (err) throw err;
+                console.log('insert success');
+
+                let DELETE = "DELETE FROM MSG_TABLE";
+                let WHERE = " WHERE MSGKEY = '" + phone.MSGKEY + "'";
+                let sql = DELETE + WHERE;
+                con.query(sql, function (err, result) {
+                    if (err) throw err;
+                    console.log('delete success');
+                })
+            })
+        })
+    })
+};
+
+let checkTableExist = function() {
+    let sql = "SELECT*FROM MSG_TABLE_" + dateService.formatDateForTable(new Date);
+    con.query(sql, function(err, result){
+        if(err){
+            let sql = "CREATE TABLE " + "MSG_TABLE_" + dateService.formatDateForTable(new Date) + " (`MSGKEY` INT NOT NULL AUTO_INCREMENT,`COMPKEY` VARCHAR(20) NOT NULL,`PHONE` VARCHAR(12) NOT NULL,`STATUS_SMS` INT NOT NULL,`INPUT_DATE` DATETIME NULL,`SEND_DATE` DATETIME NULL,`RSLT_DATE` DATETIME NULL,`RSLT` INT NULL,`MSG` VARCHAR(500) NULL,`TYPE_SMS` INT NOT NULL, PRIMARY KEY (`MSGKEY`))";
+            con.query(sql, function(err, reslt) {
+                if(err) throw err;
+                return reslt;
+            })
+        } else {
+            return result;
         }
-        return result;
     })
-}
-
-var deleteMSGRow = function(MSGKEY){
-    let DELETE = "DELETE FROM MSG_TABLE";
-    let WHERE = " WHERE MSGKEY = '" + MSGKEY + "'";
-    let sql = DELETE + WHERE;
-    con.query(sql, function(err, result) {
-        if(err) throw err;
-        return result;
-    })
-}
+};
