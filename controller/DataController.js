@@ -16,6 +16,7 @@ exports.getPhoneNumber =  function (fn) {
     let customerCareList = [];
     checkTableExist();
     con.query(sql, function (err, result) {
+        console.log(result);
         if (err) throw err;
         if (result.length < 1 ){
             fn(result);
@@ -38,7 +39,7 @@ exports.getPhoneNumber =  function (fn) {
         // send sms campaign
         CampaignController.getAuth(promotionPhone, campaignService, promotionList);
 
-        // // send sms otp
+        // send sms otp
         for (const phone of customerCarePhone) {
             OtpController.getAuth(otpService.otpMes, phone);
         }

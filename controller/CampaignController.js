@@ -6,7 +6,7 @@ const urlGetAuth = process.env.URL_REQUEST + '/oauth2/token';
 const urlCreateCampaign = process.env.URL_REQUEST + '/api/create-campaign';
 const urlSendCampaign = process.env.URL_REQUEST + '/api/push-brandname-ads';
 
-exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
+exports.getAuth = function (phonelist, campaign_input, campaignPhoneList) {
     request.post(
         urlGetAuth,
         {
@@ -22,9 +22,68 @@ exports.getAuth = function (phonelist, campaign, campaignPhoneList) {
             if (error) throw error;
             if (!error && response.statusCode === 200) {
                 console.log(body);
-                campaign.access_token = body.access_token;
-                createCampaign(campaign, phonelist, campaignPhoneList);
-            } else {
+                campaign_input.access_token = body.access_token;
+                request.post(
+                    urlCreateCampaign,
+                    {
+                        json: {
+                            access_token: campaign_input.access_token,
+                            session_id: campaign_input.session_id,
+                            CampaignName: campaign_input.CampaignName,
+                            BrandName: campaign_input.BrandName,
+                            Message: campaign_input.Message,
+                            ScheduleTime: campaign_input.ScheduleTime,
+                            Quota: campaign_input.Quota
+                        }
+                    },
+                    function (error, response, body) {
+                        if (error) throw error;
+                        if (!error && response.statusCode === 200) {
+                            console.log(body);
+                            console.log(body.CampaignCode);
+            
+                            let ads_input = new BrandNameAds(campaign_input.access_token, campaign_input.session_id,
+                                body.CampaignCode, phonelist);
+
+                                console.log(ads_input);
+                                let phonelistInput = '';
+                                for (const ads of ads_input.PhoneList) {
+                                    phonelistInput += ads + ','
+                                }
+                                request.post(
+                                    urlSendCampaign,
+                                    {
+                                        json: {
+                                            access_token: ads_input.access_token,
+                                            session_id: ads_input.session_id,
+                                            CampaignCode: ads_input.CampaignCode,
+                                            PhoneList: phonelistInput,
+                                        }
+                                    },
+                                    function (error, response, body) {
+                                        if (error) throw error;
+                                        if (!error && response.statusCode === 200) {
+                                            console.log(body);
+                                            for(const phone of ads_input.PhoneList){
+                                                DataController.updateRegiterMSG(0,1,phone);
+                                            }
+                                        } else {
+                                            console.log(response.statusCode);
+                                            console.log(response.statusMessage);
+                                            console.log(body);
+                                            for(const phone of ads_input.PhoneList){
+                                                DataController.updateRegiterMSG(1,1,phone);
+                                            }
+                                        }
+                                    }
+                                )    
+                        } else {
+                            console.log(response.statusCode);
+                            console.log(response.statusMessage);
+                            console.log(body)
+                        }
+                    }
+                )            } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body)
@@ -52,9 +111,6 @@ var createCampaign = function (campaign_input, phonelist, campaignPhoneList) {
             if (!error && response.statusCode === 200) {
                 console.log(body);
                 console.log(body.CampaignCode);
-
-                sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id,
-                    body.CampaignCode, phonelist), campaignPhoneList);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
