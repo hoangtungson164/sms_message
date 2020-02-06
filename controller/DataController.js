@@ -17,7 +17,7 @@ exports.getPhoneNumber =  function (fn) {
     checkTableExist();
     con.query(sql, function (err, result) {
         if (err) throw err;
-        if (result.length === 0){
+        if (result.length < 1 ){
             fn(result);
             return;
         }
@@ -98,3 +98,5 @@ let checkTableExist = function() {
         }
     })
 };
+
+
