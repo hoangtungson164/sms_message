@@ -1,4 +1,4 @@
-let con = require('../config/db');
+let querydb = require('../config/db');
 let validate = require('../service/validate.service');
 let dateService = require('../service/date.service');
 let CampaignController = require('./CampaignController');
@@ -7,7 +7,15 @@ let changeToArray = require('../service/changeToArray.service');
 let OtpController = require('./OtpController');
 let otpService = require('../service/otp.service');
 
-exports.getPhoneNumber =  function (fn) {
+
+exports.getSomething = async function(){
+    let SELECT = 'SELECT*FROM MSG_TABLE';
+    let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
+    let sql = SELECT + WHERE;
+    let result = await querydb(sql, '');
+}
+
+exports.getPhoneNumber = function (fn) {
     campaignService.CampaignName += 1;
     let SELECT = 'SELECT*FROM MSG_TABLE';
     let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
@@ -15,7 +23,7 @@ exports.getPhoneNumber =  function (fn) {
     let promotionList = [];
     let customerCareList = [];
     checkTableExist();
-    con.query(sql, function (err, result) {
+    await con.query(sql, function (err, result) {
         console.log(result);
         if (err) throw err;
         if (result.length < 1 ){
@@ -84,6 +92,36 @@ exports.updateRegiterMSG = function (RSLT, STATUS_SMS, phone) {
         })
     })
 };
+
+var selectByID = function(){
+            // get the updated row
+            let SELECT = 'SELECT*FROM MSG_TABLE';
+            let WHERE = ' WHERE MSGKEY = ' + phone.MSGKEY;
+            let sql = SELECT + WHERE;
+            con.query(sql, function (err, result) {
+                console.log('get again success');
+                console.log(result[0]);
+            })
+}
+
+var insertMSG = function() {
+    let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES ?';
+    let values = [changeToArray.valueChange(result[0])];
+    con.query(sql, [values], function (err, result) {
+        if (err) throw err;
+        console.log('insert success');
+    })
+}
+
+var deleteMSG = function() {
+    let DELETE = "DELETE FROM MSG_TABLE";
+    let WHERE = " WHERE MSGKEY = '" + phone.MSGKEY + "'";
+    let sql = DELETE + WHERE;
+    con.query(sql, function (err, result) {
+        if (err) throw err;
+        console.log('delete success');
+    })
+}
 
 let checkTableExist = function() {
     let sql = "SELECT*FROM MSG_TABLE_" + dateService.formatDateForTable(new Date);

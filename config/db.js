@@ -1,11 +1,26 @@
 var mysql = require('mysql');
+var config = require('./config.db')
 require('dotenv').config();
-var con = mysql.createConnection({
-    host: process.env.DB_HOST,
-    user: process.env.DB_USER,
-    password: process.env.DB_PASSWORD,
-    database: process.env.DB_DATA,
-    port: process.env.DB_PORT,
-});
+var querySQL = async function (sql, param) {
+    let connection;
+    try {
+        connection = await mysql.createConnection(config);
+        let result = await connection.query(sql, param, function(err, reslt) {
+            if(err) throw err;
+            return reslt;
+        })
+        return result;
+    } catch (err) {
+        return err;
+    } finally {
+        if (connection) {
+            try {
+                await connection.close();
+            } catch (error) {
+                return error;
+            }
+        }
+    }
+}
 
-module.exports = con;
+module.exports = querySQL;
