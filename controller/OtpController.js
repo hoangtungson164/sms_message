@@ -13,16 +13,16 @@ exports.getAuth = function (otp, phone) {
                 session_id: '789dC48b88e54f58ece5939f14a'
             }
         },
-        function (error, response, body) {
+        function (error, response, body, fn) {
             if (error) throw error;
             if (!error && response.statusCode === 200) {
                 console.log(body);
-                otp.access_token = body.access_token;
-                sendBrandNameOTP(otp, phone);
+                fn(response.statusCode);
             } else {
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body)
+                fn(response.statusCode);
             }
         }
     );
@@ -40,18 +40,18 @@ var sendBrandNameOTP = function (OTP_input, phone) {
                 Message: OTP_input.Message,
             }
         },
-        function (error, response, body) {
+        function (error, response, body, fn) {
             if (error) throw error;
             if (!error && response.statusCode === 200) {
                 console.log(body);
+                fn(response.statusCode);
                 console.log('success to send otp');
-                DataController.updateRegiterMSG(0,1,phone);
             } else {
+                fn(response.statusCode);
                 console.log('fail to send otp');
                 console.log(response.statusCode);
                 console.log(response.statusMessage);
                 console.log(body);
-                DataController.updateRegiterMSG(1,1,phone);
             }
         }
     )

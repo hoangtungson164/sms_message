@@ -52,7 +52,6 @@ var createCampaign = function (campaign_input, phonelist, campaignPhoneList) {
             if (!error && response.statusCode === 200) {
                 console.log(body);
                 console.log(body.CampaignCode);
-
                 sendSMS(new BrandNameAds(campaign_input.access_token, campaign_input.session_id,
                     body.CampaignCode, phonelist), campaignPhoneList);
             } else {

@@ -1,25 +1,26 @@
 const oracledb = require('oracledb');
 const dbconfig = require('../config/auth');
 
-async function queryOracel(res, sql, param, option) {
+async function queryOracel(sql, param, option) {
     let connection;
     try {
         connection = await oracledb.getConnection(dbconfig);
         let result = await connection.execute(
             sql, param, option);
         if (result.rows !== undefined) {
-            res.status(200).send(result.rows)
+            console.log('something');
+            return result.rows;
         } else {
-            res.status(200).send(result);
+            return result;
         }
     } catch (err) {
-        res.status(500).send("Problem with server");
+        console.log("Problem with server");
     } finally {
         if (connection) {
             try {
                 await connection.close();
             } catch (error) {
-                res.status(500).send("Problem with closing connection");
+                console.log("Problem with closing connection");
             }
         }
     }
