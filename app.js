@@ -5,15 +5,15 @@ var path = require('path');
 var morgan = require('morgan');
 var app = express();
 var cors = require('cors');
-var DataController = require('./controller/DataController');
 let CronJob = require('cron').CronJob;
+const logic = require('./logic');
 
 let job = new CronJob('* * * * * *', function(){
-    DataController.getPhoneNumber(function (r) {
-        if(r.length === 0) {
-            job.stop();
-        }
-    });
+    logic().then(r => {
+      if(!r){
+          job.stop();
+      }
+    })
 }, function(){ console.log('end of the cron') }, false, 'America/New_York');
 
 job.start();

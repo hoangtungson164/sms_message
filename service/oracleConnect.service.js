@@ -1,8 +1,5 @@
 const oracledb = require('oracledb');
 const dbconfig = require('../config/auth');
-// const util = require('util');
-// node native promisify
-// const query = util.promisify(conn.execute).bind(conn);
 
 async function queryOracel(sql, param, option) {
     let connection;
@@ -10,7 +7,7 @@ async function queryOracel(sql, param, option) {
         connection = await oracledb.getConnection(dbconfig);
         let result = await connection.execute(
             sql, param, option);
-            if(result.rows != undefined){
+            if(result.rows !== undefined){
                 return result.rows;
             }
             return result;
