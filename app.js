@@ -1,22 +1,19 @@
-var winston = require('../config/winston');
+var winston = require('./config/winston');
 var createError = require('http-errors');
 var express = require('express');
 var path = require('path');
-var cookieParser = require('cookie-parser');
 var morgan = require('morgan');
 var app = express();
 var cors = require('cors');
-var router = require('../router/router.js');
-var DataController = require('../controller/DataController');
 let CronJob = require('cron').CronJob;
+const logic = require('./logic');
 
 let job = new CronJob('* * * * * *', function(){
-    console.log('success');
-    DataController.getPhoneNumber(function (r) {
-        if(r.length === 0) {
-            job.stop();
-        }
-    });
+    logic().then(r => {
+      if(!r){
+          job.stop();
+      }
+    })
 }, function(){ console.log('end of the cron') }, false, 'America/New_York');
 
 job.start();
@@ -25,9 +22,7 @@ app.use(cors());
 app.use(morgan('combined', { stream: winston.stream }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
-app.use(cookieParser());
 app.use(express.static(path.join(__dirname, 'public')));
-app.use('/', router);
 
 
 app.use(function (req, res, next) {
@@ -46,5 +41,3 @@ app.use(function (err, req, res, next) {
     res.status(err.status || 500);
     res.render('error');
 });
-
-module.exports = app;

@@ -1,141 +1,76 @@
-let querydb = require('../config/db');
-let validate = require('../service/validate.service');
 let dateService = require('../service/date.service');
-let CampaignController = require('./CampaignController');
-let campaignService = require('../service/campaign.service');
+let campaignService = require('../util/campaign.util');
 let changeToArray = require('../service/changeToArray.service');
-let OtpController = require('./OtpController');
-let otpService = require('../service/otp.service');
+let queryOracle = require('../service/oracleConnect.service');
+const oracledb = require('oracledb');
 
+var optionSelect = { outFormat: oracledb.OUT_FORMAT_OBJECT };
+var optionCommit = { autoCommit: true};
+var params = {};
 
-exports.getSomething = async function(){
+exports.getPhoneNumber = async function () {
     let SELECT = 'SELECT*FROM MSG_TABLE';
     let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
     let sql = SELECT + WHERE;
-    let result = await querydb(sql, '');
-}
+    const rows = await queryOracle(sql, params, optionSelect);
+    return rows;
 
-exports.getPhoneNumber = function (fn) {
-    campaignService.CampaignName += 1;
-    let SELECT = 'SELECT*FROM MSG_TABLE';
-    let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
-    let sql = SELECT + WHERE;
-    let promotionList = [];
-    let customerCareList = [];
-    checkTableExist();
-    await con.query(sql, function (err, result) {
-        console.log(result);
-        if (err) throw err;
-        if (result.length < 1 ){
-            fn(result);
-            return;
-        }
-
-        // divide by type
-        for (const row of result) {
-            if (row.TYPE_SMS === 1) {
-                promotionList.push(row)
-            } else {
-                customerCareList.push(row)
-            }
-        }
-
-        // validate and get phone number
-        let promotionPhone = validate.isPhoneNumber(promotionList);
-        let customerCarePhone = validate.isPhoneNumber(customerCareList);
-
-        // send sms campaign
-        CampaignController.getAuth(promotionPhone, campaignService, promotionList);
-
-        // send sms otp
-        for (const phone of customerCarePhone) {
-            OtpController.getAuth(otpService.otpMes, phone);
-        }
-
-        console.log(result);
-    });
 };
 
-exports.updateRegiterMSG = function (RSLT, STATUS_SMS, phone) {
-    let sql = "UPDATE MSG_TABLE SET RSLT_DATE = '" + dateService.formatDate(new Date) +
-        "', RSLT = " + RSLT +
+exports.updateRegiterMSG = async function (RSLT, STATUS_SMS, phone) {
+    let sql = "UPDATE MSG_TABLE SET RSLT_DATE = TO_DATE('" + dateService.formatDate(new Date) + "', 'yyyy/mm/dd hh24:mi:ss')" +
+        ", RSLT = " + RSLT +
         ", STATUS_SMS = " + STATUS_SMS +
         " WHERE MSGKEY = '" + phone.MSGKEY + "'";
-    con.query(sql, function (err, result) {
-        if (err) throw err;
-        console.log('update success');
-
-        // get the updated row
-        let SELECT = 'SELECT*FROM MSG_TABLE';
-        let WHERE = ' WHERE MSGKEY = ' + phone.MSGKEY;
-        let sql = SELECT + WHERE;
-        con.query(sql, function (err, result) {
-            console.log('get again success');
-            console.log(result[0]);
-
-            // insert the updated row to new table
-            let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES ?';
-            let values = [changeToArray.valueChange(result[0])];
-            con.query(sql, [values], function (err, result) {
-                if (err) throw err;
-                console.log('insert success');
-
-                // delete it in the MSG_TABLE
-                let DELETE = "DELETE FROM MSG_TABLE";
-                let WHERE = " WHERE MSGKEY = '" + phone.MSGKEY + "'";
-                let sql = DELETE + WHERE;
-                con.query(sql, function (err, result) {
-                    if (err) throw err;
-                    console.log('delete success');
-                })
-            })
-        })
-    })
+        console.log(phone);
+    const result = await queryOracle(sql, params, optionCommit);
+    return result;
 };
 
-var selectByID = function(){
-            // get the updated row
-            let SELECT = 'SELECT*FROM MSG_TABLE';
-            let WHERE = ' WHERE MSGKEY = ' + phone.MSGKEY;
-            let sql = SELECT + WHERE;
-            con.query(sql, function (err, result) {
-                console.log('get again success');
-                console.log(result[0]);
-            })
+exports.selectTable = async function () {
+    let sql = "select tname from tab where tname = 'MSG_TABLE_" + dateService.formatDateForTable(new Date) + "'";
+    const result = await queryOracle(sql, params, optionSelect);
+    return result;
 }
 
-var insertMSG = function() {
-    let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES ?';
-    let values = [changeToArray.valueChange(result[0])];
-    con.query(sql, [values], function (err, result) {
-        if (err) throw err;
-        console.log('insert success');
-    })
+exports.getRow = async function(phone) {
+    let sql = "select*from MSG_TABLE where MSGKEY = " + phone.MSGKEY;
+    const result = await queryOracle(sql, params, optionSelect);
+    return result;
 }
 
-var deleteMSG = function() {
+exports.insertMSG = async function (reslt) {
+    let sql = 'INSERT INTO MSG_TABLE_' + dateService.formatDateForTable(new Date) + ' VALUES (:MSGKEY, :COMPKEY, :PHONE, :STATUS_SMS, :INPUT_DATE, :SEND_DATE, :RSLT_DATE, :RSLT, :MSG, :TYPE_SMS)';
+    let values = {
+        MSGKEY: {val: reslt.MSGKEY },
+        COMPKEY: {val: reslt.COMPKEY},
+        PHONE: {val: reslt.PHONE},
+        STATUS_SMS: {val: reslt.STATUS_SMS},
+        INPUT_DATE: {val: reslt.INPUT_DATE},
+        SEND_DATE: {val: reslt.SEND_DATE},
+        RSLT_DATE: {val: reslt.RSLT_DATE},
+        RSLT: {val: reslt.RSLT},
+        MSG: {val: reslt.MSG},
+        TYPE_SMS: {val: reslt.TYPE_SMS}
+
+    };
+    const result = await queryOracle(sql, values, optionCommit);
+    return result;
+};
+
+exports.deleteMSG = async function (phone) {
     let DELETE = "DELETE FROM MSG_TABLE";
-    let WHERE = " WHERE MSGKEY = '" + phone.MSGKEY + "'";
+    let WHERE = " WHERE MSGKEY = " + phone.MSGKEY;
     let sql = DELETE + WHERE;
-    con.query(sql, function (err, result) {
-        if (err) throw err;
-        console.log('delete success');
-    })
-}
+    const result = await queryOracle(sql, params, optionCommit);
+    return result;
+};
 
-let checkTableExist = function() {
-    let sql = "SELECT*FROM MSG_TABLE_" + dateService.formatDateForTable(new Date);
-    con.query(sql, function(err, result){
-        if(err){
-            let sql = "CREATE TABLE " + "MSG_TABLE_" + dateService.formatDateForTable(new Date) + " (`MSGKEY` INT NOT NULL AUTO_INCREMENT,`COMPKEY` VARCHAR(20) NOT NULL,`PHONE` VARCHAR(12) NOT NULL,`STATUS_SMS` INT NOT NULL,`INPUT_DATE` DATETIME NULL,`SEND_DATE` DATETIME NULL,`RSLT_DATE` DATETIME NULL,`RSLT` INT NULL,`MSG` VARCHAR(500) NULL,`TYPE_SMS` INT NOT NULL, PRIMARY KEY (`MSGKEY`))";
-            con.query(sql, function(err, reslt) {
-                if(err) throw err;
-                return reslt;
-            })
-        } else {
-            return result;
-        }
-    })
+exports.createTable = async function () {
+    let sql = "CREATE TABLE " + "MSG_TABLE_" + dateService.formatDateForTable(new Date)
+    + " (MSGKEY INT NOT NULL PRIMARY KEY, COMPKEY VARCHAR(20) NOT NULL, PHONE VARCHAR(12) NOT NULL, STATUS_SMS INT NOT NULL, INPUT_DATE TIMESTAMP NULL, SEND_DATE TIMESTAMP NULL, RSLT_DATE TIMESTAMP NULL, RSLT INT NULL, MSG VARCHAR(500) NULL, TYPE_SMS INT NOT NULL)";
+    const result = queryOracle(sql, params, optionCommit);
+    return result;
 };
 
 

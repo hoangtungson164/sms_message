@@ -1,51 +1,54 @@
-let campg = ['0323456789', '0312546392', '0973069378', '0123456789'];
-// var Regex = require("regex");
-// var regex = new Regex(/(a|b)*abb/);
-var dateService = require('./service/date.service');
-var OtpController = require('./controller/OtpController');
+var DataController = require('./controller/DataController');
+let querySQL = require('./config/db');
 
-// let pattern = '/^0[35789]{1}[0-9]{7}[1-9]{1}$/'
-// let reg = new RegExp(/^0[35789]{1}[0-9]{7}[1-9]{1}$/)
-// let phonesList = [];
-// for (const phone of campg) {
-//     if (reg.test(phone)) {
-//         phonesList.push(phone);
-//     };
-// }
-// console.log(phonesList);
-// console.log(regex.test("abb"),
-// regex.test("aabb"),
-// regex.test("babb"),
-// regex.test("aaabb"),
-// regex.test("ababb"),
-// regex.test("abba"),
-// regex.test("cabb"))
+DataController.getSomething()
 
-// console.log(dateService.formatDate(new Date));
-// console.log(dateService.formatDateForTable(new Date));
+//-----------------------------get something -------------------------------------
+// exports.getSomething = async function () {
+//     try {
+//         let SELECT = 'SELECT*FROM MSG_TABLE';
+//         let WHERE = ' WHERE STATUS_SMS = 0 OR RSLT = 1';
+//         let sql = SELECT + WHERE;
+//         const someRows = await queryOracle('SELECT * FROM MSG_TABLE');
+//         // someRows.then(val => {
+//             console.log("==========================");
+//             // console.log(val);
+//             console.log("someRows")
+//             console.log(someRows)
+//         // })
+//     } catch (err) {
+//         // handle the error
+//     } finally {
+//         // await querySQL.close();
+//     }
+// };
 
-// const asyncForEach = async (array, callback) => {
-//   for (let index = 0; index < array.length; index++) {
-//     await callback(array[index], index, array)
-//   }
-// }
+// ------------------------------db file---------------------------------
+// var config = require('./config.db');
 
-// const start = async () => {
-//   await asyncForEach([1, 2, 3], async (num) => {
-//     console.log(num)
-//   })
-//   console.log('Done')
-// }
+// const mysql = require('mysql'); // or use import if you use TS
+// const util = require('util');
+// const conn = mysql.createConnection(config);
 
-// start();
+// // node native promisify
+// const query = util.promisify(conn.query).bind(conn);
 
-// var CronJob = require('cron').CronJob;
-// var job = new CronJob('* * * * * *', function() {
-//   console.log('You will see this message every second');
-// }, function(){ console.log('end of the cron') }, false, 'America/New_York');
-// job.start();
+// querySQL = async function (sql) {
+//     //   try {
+//     // const rows = await query(sql);
+//     // console.log(JSON.stringify(rows));
+//     // return JSON.stringify(rows);
+//     //   } finally {
+//     //     conn.end();
+//     //   }
+//     // await new Promise(resolve => {
+//     //     resolve(query(sql));
+//     // })
+//     try {
+//         return await Promise.resolve(query(sql))
+//     } catch (e) {
+//         conn.end();
+//     }
+// };
 
-let campaignName = 'campaign_name ' + new Date;
-
-console.log(campaignName);
-
+// module.exports = querySQL;
