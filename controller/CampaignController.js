@@ -1,10 +1,9 @@
 let request = require('request');
-let BrandNameAds = require('../domain/BrandNameAds.class');
-let DataController = require('./DataController');
 require('dotenv').config();
 const urlGetAuth = process.env.URL_REQUEST + '/oauth2/token';
 const urlCreateCampaign = process.env.URL_REQUEST + '/api/create-campaign';
 const urlSendCampaign = process.env.URL_REQUEST + '/api/push-brandname-ads';
+const logger = require('../config/logger');
 
 exports.getAuth = function () {
     return new Promise(function (resolve, reject) {
@@ -23,11 +22,13 @@ exports.getAuth = function () {
                 if (error) throw error;
                 if (!error && response.statusCode === 200) {
                     console.log(body);
+                    logger.info(body);
                     resolve(body);
                 } else {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
+                    logger.error(body);
                     reject('fail');
                 }
             }
@@ -54,11 +55,13 @@ exports.createCampaign = function (campaign_input, access_token) {
                 if (error) throw error;
                 if (!error && response.statusCode === 200) {
                     console.log(body);
+                    logger.info(body);
                     resolve(body);
                 } else {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
+                    logger.error(body);
                     reject('fail create campaign')
                 }
             }
@@ -93,6 +96,7 @@ exports.sendSMS = function (ads_input) {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
+                    logger.error(body);
                     reject(false);
                 }
             }

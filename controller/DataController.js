@@ -1,7 +1,5 @@
-let dateService = require('../service/date.service');
-let campaignService = require('../util/campaign.util');
-let changeToArray = require('../service/changeToArray.service');
-let queryOracle = require('../service/oracleConnect.service');
+const dateService = require('../service/date.service');
+const queryOracle = require('../service/oracleConnect.service');
 const oracledb = require('oracledb');
 
 var optionSelect = { outFormat: oracledb.OUT_FORMAT_OBJECT };

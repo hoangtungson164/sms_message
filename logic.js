@@ -3,16 +3,19 @@ const validatePhone = require('./service/validate.service');
 const CampaignController = require('./controller/CampaignController');
 const OtpController = require('./controller/OtpController');
 const otpUtil = require('./util/otp.util');
+const dateService = require('./service/date.service');
 const campaignUtil = require('./util/campaign.util');
 const BrandNameAds = require('./domain/BrandNameAds.class');
+const logger = require('./config/logger');
 
-let otpFunction = async function () {
+campaignUtil.CampaignName += dateService.formatDate(new Date);
+    let otpFunction = async function () {
     return new Promise(async function (resolve, reject) {
         await checkTableExist();
         const getData = await DataController.getPhoneNumber();
         if(getData.length < 1){
             resolve(false);
-            return false;
+            return;
         }
         const getValidPhone = await validatePhone.isPhoneNumber(getData);
         let phoneListCamp = [];
@@ -41,6 +44,7 @@ let updateAfterSendCampaign = async function (phoneListCamp) {
             }
         }
     } catch (err) {
+        logger.error(err);
         throw err
     } finally {
         for (const phoneCamp of phoneListCamp) {
@@ -60,6 +64,7 @@ let updateAfterSend = async function (phone) {
             await DataController.updateRegiterMSG(1, 1, phone)
         }
     } catch (err) {
+        logger.error(err);
         throw err;
     } finally {
         await moveData(phone)
@@ -69,9 +74,10 @@ let updateAfterSend = async function (phone) {
 let moveData = async function (phone) {
     const resultSelect = await DataController.getRow(phone);
     const resultInsert = await DataController.insertMSG(resultSelect[0]);
+    console.log("---------------------------insert-------------------------------")
     console.log(resultInsert);
-    const resultDelete = await DataController.deleteMSG(phone);
-    console.log(resultDelete);
+    // const resultDelete = await DataController.deleteMSG(phone);
+    // console.log(resultDelete);
 };
 
 let sendOTP = async function (otp, phone) {

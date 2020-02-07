@@ -1,5 +1,6 @@
 const oracledb = require('oracledb');
 const dbconfig = require('../config/auth');
+const logger = require('../config/logger');
 
 async function queryOracel(sql, param, option) {
     let connection;
@@ -7,11 +8,13 @@ async function queryOracel(sql, param, option) {
         connection = await oracledb.getConnection(dbconfig);
         let result = await connection.execute(
             sql, param, option);
+            logger.info(result);
             if(result.rows !== undefined){
                 return result.rows;
             }
             return result;
     } catch (err) {
+        logger.error(err);
         return err;
     } finally {
         if (connection) {

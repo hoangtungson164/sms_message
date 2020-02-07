@@ -14,6 +14,9 @@ var config = {
             idle: 10000
         }
     },
+    log: {
+        orgLog: '../../logs'
+    },
     redis: {
         host: 'localhost',
         port: 6379

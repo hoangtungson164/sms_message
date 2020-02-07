@@ -9,10 +9,11 @@ exports.isPhoneNumber = function(phones){
             if(reg.test(phone.PHONE)) {
                 phonesList.push(phone);
             } else {
-                await DataController.updateRegiterMSG(1,1, phone)
+                await DataController.insertMSG(phone);
+                await DataController.deleteMSG(phone);
             }
         }
         resolve(phonesList);
     })
-}
+};
 

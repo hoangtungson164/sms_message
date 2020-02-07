@@ -23,6 +23,7 @@ exports.getAuth = function () {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
+                    logger.error(body);
                     reject(body);
                 }
             }
@@ -54,6 +55,7 @@ exports.sendBrandNameOTP = async function (OTP_input, phone, access_token) {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
+                    logger.error(body);
                     reject(false);
                 }
             }
