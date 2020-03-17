@@ -8,13 +8,14 @@ var cors = require('cors');
 let CronJob = require('cron').CronJob;
 const logic = require('./logic');
 
-let job = new CronJob('* * * * * *', function(){
-    logic().then(r => {
-      if(!r){
-          job.stop();
+let job = new CronJob('* * * * * *', async function(){
+    job.stop();
+    await logic().then(r => {
+      if(r){
+          job.start();
       }
     })
-}, function(){ console.log('end of the cron') }, false, 'America/New_York');
+}, function(){ console.log('end of the cron') }, false);
 
 job.start();
 

@@ -2,113 +2,138 @@ const DataController = require('./controller/DataController');
 const validatePhone = require('./service/validate.service');
 const CampaignController = require('./controller/CampaignController');
 const OtpController = require('./controller/OtpController');
-const otpUtil = require('./util/otp.util');
 const dateService = require('./service/date.service');
-const campaignUtil = require('./util/campaign.util');
+const otpDomain = require('./domain/OTP.class');
+const campaignDomain = require('./domain/Campaign.class');
 const BrandNameAds = require('./domain/BrandNameAds.class');
 const logger = require('./config/logger');
 
-campaignUtil.CampaignName += dateService.formatDate(new Date);
-    let otpFunction = async function () {
+otpFunction = async function () {
     return new Promise(async function (resolve, reject) {
-        await checkTableExist();
-        const getData = await DataController.getPhoneNumber();
-        if(getData.length < 1){
-            resolve(false);
-            return;
-        }
-        const getValidPhone = await validatePhone.isPhoneNumber(getData);
-        let phoneListCamp = [];
-        for (const phone of getValidPhone) {
-            if (phone.TYPE_SMS === 0) {
-                await updateAfterSend(phone);
-            } else {
-                phoneListCamp.push(phone);
+        console.log(new Date);
+        try {
+            await checkTableExist();
+            const getData = await DataController.getPhoneNumber();
+            if (getData.length > 0) {
+                const getValidPhone = await validatePhone.isPhoneNumber(getData);
+                for (const phone of getValidPhone) {
+                    if (phone.TYPE_SMS === 0) {
+                        await updateAfterSend(phone);
+                    } else {
+                        await updateAfterSendCampaign(phone);
+                    }
+                }
             }
+            resolve(true);
+        } catch (e) {
+            logger.error(e);
         }
-        await updateAfterSendCampaign(phoneListCamp);
+
     });
 };
 
-let updateAfterSendCampaign = async function (phoneListCamp) {
-    const sendSMSCamp = await sendCampaign(campaignUtil, phoneListCamp);
-    console.log(sendSMSCamp);
+let updateAfterSendCampaign = async function (phone) {
     try {
+        const sendSMSCamp = await sendCampaign(phone);
+        console.log(sendSMSCamp);
         if (sendSMSCamp) {
-            for (const phoneCamp of phoneListCamp) {
-                await DataController.updateRegiterMSG(0, 1, phoneCamp)
-            }
+            await moveData(0, 1, phone)
         } else {
-            for (const phoneCamp of phoneListCamp) {
-                await DataController.updateRegiterMSG(1, 1, phoneCamp)
-            }
+            await moveData(1, 1, phone)
         }
     } catch (err) {
         logger.error(err);
-        throw err
-    } finally {
-        for (const phoneCamp of phoneListCamp) {
-            await moveData(phoneCamp)
-        }
     }
 };
 
 let updateAfterSend = async function (phone) {
-    const result = await sendOTP(otpUtil, phone);
-    console.log(result);
     try {
+        const result = await sendOTP(phone);
+        console.log(result);
         if (result) {
-            console.log('success');
-            await DataController.updateRegiterMSG(0, 1, phone);
+            console.log("---------------------------insert+update+delete-------------------------------");
+            await moveData(0, 1, phone);
         } else {
-            await DataController.updateRegiterMSG(1, 1, phone)
+            console.log("---------------------------insert+update+delete-------------------------------");
+            await moveData(1, 1, phone);
         }
     } catch (err) {
         logger.error(err);
-        throw err;
     } finally {
-        await moveData(phone)
+        console.log('send otp');
     }
 };
 
-let moveData = async function (phone) {
-    const resultSelect = await DataController.getRow(phone);
-    const resultInsert = await DataController.insertMSG(resultSelect[0]);
-    console.log("---------------------------insert-------------------------------")
-    console.log(resultInsert);
-    // const resultDelete = await DataController.deleteMSG(phone);
-    // console.log(resultDelete);
+let moveData = async function (rslt, status, phone) {
+    try {
+        console.log('===================== update this phone ============================');
+        await DataController.updateRegisteredMSG(rslt, status, phone);
+        console.log('=======================get this phone===================');
+        const resultSelect = await DataController.getRow(phone);
+        console.log('=================== insert =========================');
+        const resultInsert = await DataController.insertMSG(resultSelect[0]);
+        console.log("---------------------------delete-------------------------------");
+        const resultDelete = await DataController.deleteMSG(phone);
+        console.log(resultDelete);
+    } catch (err) {
+        logger.error(err);
+    }
 };
 
-let sendOTP = async function (otp, phone) {
-    const getAuth = await OtpController.getAuth();
-    const sendSMS = await OtpController.sendBrandNameOTP(otp, phone, getAuth.access_token);
-    if (sendSMS) {
-        await DataController.updateRegiterMSG(0, 1, phone);
-    } else {
-        await DataController.updateRegiterMSG(1, 1, phone);
+let sendOTP = async function (phone) {
+    try {
+        console.log("========================= get auth for sending otp ==================");
+        const getAuth = await OtpController.getAuth();
+        let base64data = Buffer.from(phone.MSG).toString('base64');
+        let otp = new otpDomain(getAuth.access_token, 'abcd', 'FTI', phone.PHONE, base64data);
+
+        const sendSMS = await OtpController.sendBrandNameOTP(otp);
+        if (sendSMS) {
+            console.log("---------------------------update success send-------------------------------");
+            await DataController.updateRegisteredMSG(0, 1, phone);
+        } else {
+            console.log("---------------------------update failed send-------------------------------");
+            await DataController.updateRegisteredMSG(1, 1, phone);
+        }
+        return sendSMS;
+    } catch (err) {
+        logger.error(err);
     }
-    return sendSMS;
 };
 
 let checkTableExist = async function () {
-    const tableCheck = await DataController.selectTable();
-    console.log(tableCheck);
-    if (tableCheck.length < 1) {
-        const tableCreate = await DataController.createTable();
-        console.log(tableCreate);
-    } else {
-        console.log('nothing to do');
+    try {
+        const tableCheck = await DataController.selectTable();
+        console.log(tableCheck);
+        if (tableCheck.length < 1) {
+            const tableCreate = await DataController.createTable();
+            console.log(tableCreate);
+        } else {
+            console.log('nothing to do');
+        }
+    } catch (e) {
+        logger.error(e);
     }
 };
 
-let sendCampaign = async function (campaign, phone) {
-    const getAuth = await CampaignController.getAuth();
-    const createCampaign = await CampaignController.createCampaign(campaign, getAuth.access_token);
-    let brandName = new BrandNameAds(getAuth.access_token, 'abcde', createCampaign.CampaignCode, phone);
-    const sendCampaign = await CampaignController.sendSMS(brandName);
-    console.log(sendCampaign);
-    return sendCampaign;
+let sendCampaign = async function (phone) {
+    try {
+        console.log("========================= get auth for campaign ==================");
+        const getAuth = await CampaignController.getAuth();
+        const dateCampaign = dateService.formatDateForCampaign(phone.SEND_DATE);
+        let campaign = new campaignDomain(getAuth.access_token, 'abcd', 'Khuyen 27' + new Date, 'FTI', phone.MSG, dateCampaign, '20');
+
+        console.log("========================= create campaign ==================");
+        const createCampaign = await CampaignController.createCampaign(campaign, getAuth.access_token);
+
+        console.log("========================= send campaign ==================");
+        let brandName = new BrandNameAds(getAuth.access_token, 'abcde', createCampaign.CampaignCode, phone.PHONE);
+        const sendCampaign = await CampaignController.sendSMS(brandName);
+        console.log(sendCampaign);
+        return sendCampaign;
+    } catch (e) {
+        logger.error(e);
+    }
 };
 
 module.exports = otpFunction;

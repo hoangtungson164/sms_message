@@ -4,6 +4,7 @@ const urlGetAuth = process.env.URL_REQUEST + '/oauth2/token';
 const urlCreateCampaign = process.env.URL_REQUEST + '/api/create-campaign';
 const urlSendCampaign = process.env.URL_REQUEST + '/api/push-brandname-ads';
 const logger = require('../config/logger');
+let count = 0;
 
 exports.getAuth = function () {
     return new Promise(function (resolve, reject) {
@@ -29,7 +30,7 @@ exports.getAuth = function () {
                     console.log(response.statusMessage);
                     console.log(body);
                     logger.error(body);
-                    reject('fail');
+                    reject('fail to get authority for sending campaign');
                 }
             }
         );
@@ -71,12 +72,8 @@ exports.createCampaign = function (campaign_input, access_token) {
 
 exports.sendSMS = function (ads_input) {
     return new Promise(function (resolve, reject) {
+        console.log('===========phone==================');
         console.log(ads_input.PhoneList);
-        let phoneList = '';
-        for (const ads of ads_input.PhoneList) {
-            phoneList += ads.PHONE + ','
-        }
-        console.log(phoneList);
         request.post(
             urlSendCampaign,
             {
@@ -84,20 +81,23 @@ exports.sendSMS = function (ads_input) {
                     access_token: ads_input.access_token,
                     session_id: ads_input.session_id,
                     CampaignCode: ads_input.CampaignCode,
-                    PhoneList: phoneList,
+                    PhoneList: ads_input.PhoneList,
                 }
             },
             function (error, response, body) {
                 if (error) throw error;
                 if (!error && response.statusCode === 200) {
                     console.log(body);
+                    console.log('========================================');
+                    count ++;
+                    console.log(count);
                     resolve(true);
                 } else {
                     console.log(response.statusCode);
                     console.log(response.statusMessage);
                     console.log(body);
                     logger.error(body);
-                    reject(false);
+                    resolve(false);
                 }
             }
         )
